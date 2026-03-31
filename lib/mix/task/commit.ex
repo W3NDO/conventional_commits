@@ -12,12 +12,14 @@ defmodule Mix.Task.Commit do
   @aliases [
     t: :type,
     f: :footer,
+    nb: :no_body,
     h: :help
   ]
 
   @switches [
     type: :string,
     footer: :boolean,
+    no_body: :boolean,
     help: :boolean
   ]
 
@@ -57,6 +59,10 @@ defmodule Mix.Task.Commit do
 
     OPTIONS
       -h | --help : Opens this message
+      -t | --type : Accepts a string that defines the type of commit message. Allowed options are:
+      \n\t#{inspect(Enum.map(@types, &(Atom.to_string(&1))))}\n
+      -f | --footer : A boolean indicating whether the commit has a footer
+      -nb | --no-body : A boolean indicating whether to include a body to the commit message. Default is false meaning that the commit will require a body.
     """
   end
 end
