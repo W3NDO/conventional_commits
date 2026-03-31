@@ -1,0 +1,3 @@
+1. Create a REPL that takes in optional params for a commit message
+2. Figure out which parts of a commit should be optional, and which should not be. 
+3. Allow for a `.exs` file that specifies oraganisation specific definitions for their commits(eg: if your org needs branch name in commit header or not )
