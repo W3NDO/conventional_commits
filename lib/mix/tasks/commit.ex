@@ -1,4 +1,4 @@
-defmodule Mix.Task.Commit do
+defmodule Mix.Tasks.Commit do
   @moduledoc """
   This will create a REPL that allows the user to create a commit message following specifications defined by [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) when the user requests `mix commit`.
   """
@@ -12,7 +12,7 @@ defmodule Mix.Task.Commit do
   @aliases [
     t: :type,
     f: :footer,
-    nb: :no_body,
+    n: :no_body,
     h: :help
   ]
 
@@ -25,7 +25,10 @@ defmodule Mix.Task.Commit do
 
   @impl Mix.Task
   def run(args) do
-    parse_args(args)
+    case parse_args(args) do
+      {:ok, opts} -> open_repl(opts)
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   def parse_args(argv) do
@@ -35,15 +38,46 @@ defmodule Mix.Task.Commit do
       invalid != [] ->
         {:error, "Invalid options: #{inspect(invalid)}"}
 
-      Keyword.get(opts, :help) == true ->
+      Keyword.has_key?(opts, :help) == true ->
         {:ok, help_docs()}
 
-      Enum.member?(@types, Keyword.get(opts, :type) |> String.downcase() |> String.to_atom) == true ->
+      Keyword.has_key?(opts, :type) && !valid_commit_types?(opts) ->
+        {:error,
+         "Unknown commit type. Allowed types are: [fix, feat, build, chore, ci, docs, style, refactor, perf, test]"}
+
+      Keyword.has_key?(opts, :type) && valid_commit_types?(opts) ->
         {:ok, opts}
 
       true ->
         {:ok, opts}
     end
+  end
+
+  defp build_repl_args(opts) do
+    config = %{
+      type: Keyword.get(opts, :type),
+      body: Keyword.get(opts, :body),
+      footer: Keyword.get(opts, :footer)
+    }
+
+    user_config =
+      if File.exists?(Path.join(File.cwd!(), ".commit.exs")) do
+        {user_config, _} = Code.eval_file(".commit.exs")
+
+        user_config =
+          Enum.map(user_config, fn {k, v} -> Map.put(%{}, k, v) end)
+          |> Enum.reduce(fn elem, acc -> Map.merge(elem, acc) end)
+      else
+        %{}
+      end
+
+    Map.merge(config, user_config)
+  end
+
+  defp valid_commit_types?(opts) do
+    type_value = Keyword.get(opts, :type) |> String.to_atom()
+
+    Enum.member?(@types, type_value)
   end
 
   defp help_docs do
@@ -60,7 +94,7 @@ defmodule Mix.Task.Commit do
     OPTIONS
       -h | --help : Opens this message
       -t | --type : Accepts a string that defines the type of commit message. Allowed options are:
-      \n\t#{inspect(Enum.map(@types, &(Atom.to_string(&1))))}\n
+      \n\t#{inspect(Enum.map(@types, &Atom.to_string(&1)))}\n
       -f | --footer : A boolean indicating whether the commit has a footer
       -nb | --no-body : A boolean indicating whether to include a body to the commit message. Default is false meaning that the commit will require a body.
     """
