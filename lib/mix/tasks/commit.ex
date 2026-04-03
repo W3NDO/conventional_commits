@@ -26,7 +26,7 @@ defmodule Mix.Tasks.Commit do
   @impl Mix.Task
   def run(args) do
     case parse_args(args) do
-      {:ok, opts} -> open_repl(opts)
+      {:ok, opts} -> Utils.Cli.run_repl(opts)
       {:error, reason} -> {:error, reason}
     end
   end
