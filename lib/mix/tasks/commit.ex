@@ -26,13 +26,17 @@ defmodule Mix.Tasks.Commit do
   @impl Mix.Task
   def run(args) do
     case parse_args(args) do
-      {:ok, :help} -> help_docs()
+      {:ok, :help} ->
+        help_docs()
+
       {:ok, opts} ->
         opts
         |> build_repl_args()
         |> Utils.Cli.run_repl()
         |> make_commit()
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -69,7 +73,6 @@ defmodule Mix.Tasks.Commit do
       if File.exists?(Path.join(File.cwd!(), ".commit.exs")) do
         {user_config, _} = Code.eval_file(".commit.exs")
 
-        user_config =
           Enum.map(user_config, fn {k, v} -> Map.put(%{}, k, v) end)
           |> Enum.reduce(fn elem, acc -> Map.merge(elem, acc) end)
       else
@@ -106,13 +109,62 @@ defmodule Mix.Tasks.Commit do
   end
 
   defp make_commit(state) do
+    current_commit = format_commit(state)
+
+    IO.puts("\nThis is your current commit:\n")
+    IO.puts(colorize(current_commit))
+
+    case confirm?("\nDo you want to commit? (y/yes/n/no): ") do
+      true ->
+        Utils.Git.commit(current_commit)
+
+      false ->
+        IO.puts("Commit aborted.")
+        :ok
+    end
+  end
+
+  defp format_commit(state) do
     """
     #{state.type}(#{state.scope}): #{state.description}
 
     #{state.body}
-
     #{state.footer}
     """
-    |> Utils.Git.commit()
+  end
+
+  defp colorize(prompt) do
+    IO.ANSI.light_green() <> prompt <> IO.ANSI.reset()
+  end
+
+  defp confirm?(prompt) do
+    prompt
+    |> IO.gets()
+    |> normalize_input()
+    |> case do
+      "y" ->
+        true
+
+      "yes" ->
+        true
+
+      "n" ->
+        false
+
+      "no" ->
+        false
+
+      _ ->
+        IO.puts("Invalid input. Please enter y/yes/n/no.")
+        confirm?(prompt)
+    end
+  end
+
+  defp normalize_input(nil), do: "\n"
+
+  defp normalize_input(input) do
+    input
+    |> String.trim()
+    |> String.downcase()
   end
 end
