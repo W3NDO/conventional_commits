@@ -1,18 +1,38 @@
 defmodule Utils.Cli do
 
   def run_repl(opts) do
-    %Utils.State{
-      type: Keyword.get(opts, :type, "feat"),
-      scope: nil,
-      body: nil,
-      description: nil,
-      footer: nil
-    }
+    state = build_initial_state(opts)
 
-    |> enter_scope()
+    # Check if scope is required and enter it or continue
+    state =
+      case Map.get(state, :scoped, false) do
+        false ->
+          state
+        true ->
+          enter_scope(state)
+      end
+    # Description is mandatory
     |> enter_description()
-    |> enter_body()
-    |> enter_footer()
+
+    # check if body is required and enter it
+    state =
+      case Map.get(state, :required_body, false) do
+        false ->
+          state
+        true ->
+          enter_body(state)
+      end
+
+    state =
+      case Map.get(state, :required_footer, false) do
+        false ->
+          state
+        true ->
+          footer_fields = Map.get(opts, :footer_fields, [])
+          enter_footer(state, footer_fields)
+      end
+
+      state
 
   end
 
@@ -22,7 +42,7 @@ defmodule Utils.Cli do
         Enter the scope of this commit (eg `logging` becomes state(logging) ):
       """
       |> single_line_input()
-    %Utils.State{state| scope: scope}
+    %{state| scope: scope}
   end
 
   def enter_description(state) do
@@ -32,7 +52,7 @@ defmodule Utils.Cli do
       """
       |> single_line_input()
 
-      %Utils.State{state | description: description}
+      %{state | description: description}
   end
 
   def enter_body(state) do
@@ -42,25 +62,49 @@ defmodule Utils.Cli do
       """
     |> multiline_input()
 
-    %Utils.State{state | body: body}
+    %{state | body: body}
   end
 
-  def enter_footer(state) do
-    footer =
-      """
-      This is a footer for your commit. It can be the PR your commit is referencing, the author or the reviewers. This can also be a multiline entry.
-      """
-    |> multiline_input()
+  def enter_footer(state, footer_fields \\ []) do
 
-    %Utils.State{state | footer: footer}
+    case Enum.empty?(footer_fields) do
+      true ->
+        footer =
+          """
+          This is a footer for your commit. It can be the PR your commit is referencing, the author or the reviewers. This can also be a multiline entry.
+          """
+        |> multiline_input()
+
+        %{state | footer: footer}
+
+      false ->
+        formatted_footer_fields =
+          footer_fields
+          |> Enum.map(&(Atom.to_string(&1))
+          |> String.capitalize())
+        footer =
+          """
+          Your .commit.exs specifies that you are required to enter the following fields in your footer:  #{inspect( formatted_footer_fields )}
+
+          For example:
+
+          #{inspect(hd(formatted_footer_fields))}: <Your Value here>\n
+          """
+          |> multiline_input()
+
+        %{state | footer: footer}
+    end
   end
 
   defp single_line_input(prompt) do
-    input = IO.gets(prompt) |> String.trim()
+    ansi_prompt = colorize(prompt)
+    IO.gets(ansi_prompt)
+    |> String.trim()
   end
 
   def multiline_input(prompt) do
-    IO.puts(prompt <> " (Enter empty line to finish): ")
+    ansi_prompt = colorize(prompt <> "(Enter empty line to finish): ")
+    IO.puts(ansi_prompt)
 
     read_lines([])
   end
@@ -72,5 +116,22 @@ defmodule Utils.Cli do
       line ->
         read_lines([String.trim_trailing(line, "\n") | acc])
     end
+  end
+
+  defp build_initial_state(opts) do
+    %Utils.State{
+      type: Map.get(opts, :type, "feat"),
+      scope: nil,
+      body: nil,
+      description: nil,
+      footer: nil,
+      required_footer: Enum.member?(Map.get(opts, :required, []), :footer),
+      required_body: Enum.member?(Map.get(opts, :required, []), :body),
+      scoped: Enum.member?(Map.get(opts, :required, []), :scope)
+    }
+  end
+
+  defp colorize(prompt) do
+    IO.ANSI.light_cyan() <> prompt <> IO.ANSI.reset()
   end
 end

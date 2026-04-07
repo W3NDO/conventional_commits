@@ -26,7 +26,12 @@ defmodule Mix.Tasks.Commit do
   @impl Mix.Task
   def run(args) do
     case parse_args(args) do
-      {:ok, opts} -> Utils.Cli.run_repl(opts)
+      {:ok, :help} -> help_docs()
+      {:ok, opts} ->
+        opts
+        |> build_repl_args()
+        |> Utils.Cli.run_repl()
+        |> make_commit()
       {:error, reason} -> {:error, reason}
     end
   end
@@ -39,7 +44,7 @@ defmodule Mix.Tasks.Commit do
         {:error, "Invalid options: #{inspect(invalid)}"}
 
       Keyword.has_key?(opts, :help) == true ->
-        {:ok, help_docs()}
+        {:ok, :help}
 
       Keyword.has_key?(opts, :type) && !valid_commit_types?(opts) ->
         {:error,
@@ -98,5 +103,16 @@ defmodule Mix.Tasks.Commit do
       -f | --footer : A boolean indicating whether the commit has a footer
       -nb | --no-body : A boolean indicating whether to include a body to the commit message. Default is false meaning that the commit will require a body.
     """
+  end
+
+  defp make_commit(state) do
+    """
+    #{state.type}(#{state.scope}): #{state.description}
+
+    #{state.body}
+
+    #{state.footer}
+    """
+    |> Utils.Git.commit()
   end
 end
