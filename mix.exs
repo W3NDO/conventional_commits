@@ -7,7 +7,9 @@ defmodule ConventionalCommits.MixProject do
       version: "0.1.0",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      description: "mix task for writing conventional commits",
+      package: package()
     ]
   end
 
@@ -23,6 +25,14 @@ defmodule ConventionalCommits.MixProject do
     [
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+    ]
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"Github" => "https://github.com/W3NDO/conventional_commits"},
+      source_url: "https://github.com/W3NDO/conventional_commits"
     ]
   end
 end

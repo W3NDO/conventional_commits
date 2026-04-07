@@ -1,4 +1,6 @@
-# ConventionalCommits
+# Conventional Commits
+
+![Showcase GIF](./showcase.gif)
 
 A mix task that allows for conventional commits of the codebase. 
 
@@ -30,7 +32,37 @@ From [Conventionalcommits.org](https://www.conventionalcommits.org/en/v1.0.0/):
     
     5.footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to git trailer format.
 
-> Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic Versioning (unless they include a BREAKING CHANGE). A scope may be provided to a commit’s type, to provide additional contextual information and is contained within parenthesis, e.g., feat(parser): add ability to parse arrays.
+Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic Versioning (unless they include a BREAKING CHANGE). A scope may be provided to a commit’s type, to provide additional contextual information and is contained within parenthesis, e.g., feat(parser): add ability to parse arrays.
 
 ## Utility of this tool
-Instead of `git commit-m "minor fixes"` I suggest `mix commit`, that then runs you through a REPL that would check for the changed files, ask what type of commit message this is, ask if there are any footers that would need to be added. 
+`mix commit [OPTIONS]`
+
+OPTIONS
+### `-h` or `--help`
+Opens the help message
+
+### `-t` or `--type` 
+Accepts a string that defines the type of commit message. Allowed options are:
+`fix`, `feat`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf` and `test`
+
+### `-f` or `--footer`
+A boolean indicating whether the commit has a footer. Can also be specified in the required field in your `.commit.exs` file
+
+## USER DEFINED OPTIONS
+
+### The `.commit.exs` File
+If your organisation enforces some required fields in a commit message, you can specify them here. 
+
+```
+# Used by "mix commit"
+[
+  required: [:scope, :body, :footer], # specifies the parts of a commit that must be included. Valid options here are :scope, :body and :footer
+  footer_fields: [:author, :reviewed_by, :refs] # specifies the required footer fields.
+]
+```
+
+This will ensure to ask the user to enter these fields when writing the commit.
+
+## What this mix task doesn't do
+1. Push your changes upstream.
+2. Add changes to staging. (WIP)
