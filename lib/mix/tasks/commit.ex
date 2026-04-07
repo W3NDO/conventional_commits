@@ -27,7 +27,7 @@ defmodule Mix.Tasks.Commit do
   def run(args) do
     case parse_args(args) do
       {:ok, :help} ->
-        help_docs()
+        help_docs() |> IO.puts()
 
       {:ok, opts} ->
         opts
@@ -103,8 +103,18 @@ defmodule Mix.Tasks.Commit do
       -h | --help : Opens this message
       -t | --type : Accepts a string that defines the type of commit message. Allowed options are:
       \n\t#{inspect(Enum.map(@types, &Atom.to_string(&1)))}\n
-      -f | --footer : A boolean indicating whether the commit has a footer
-      -nb | --no-body : A boolean indicating whether to include a body to the commit message. Default is false meaning that the commit will require a body.
+      -f | --footer : A boolean indicating whether the commit has a footer. Can also be specified in `.commit.exs`
+      -n | --no-body : A boolean indicating whether to include a body to the commit message. Default is false meaning that the commit will require a body. Can also be specified in `.commit.exs`
+
+    USER DEFINED OPTIONS
+      You can define a `.commit.exs` file which returns
+
+      ```
+        [
+          required: [], # specifies the parts of a commit that must be included. Valid options are [:scope, :body, :footer]
+          footer_fields: [:author, :reviewed_by, :refs] # specifies the required footer fields.
+        ]
+      ```
     """
   end
 
