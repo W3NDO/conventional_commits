@@ -12,15 +12,17 @@ defmodule Mix.Tasks.Commit do
   @aliases [
     t: :type,
     f: :footer,
-    n: :no_body,
-    h: :help
+    b: :body,
+    h: :help,
+    B: :breaking
   ]
 
   @switches [
     type: :string,
     footer: :boolean,
-    no_body: :boolean,
-    help: :boolean
+    body: :boolean,
+    help: :boolean,
+    breaking: :boolean
   ]
 
   @impl Mix.Task
@@ -36,11 +38,11 @@ defmodule Mix.Tasks.Commit do
         |> make_commit()
 
       {:error, reason} ->
-        {:error, reason}
+        print_error(reason)
     end
   end
 
-  def parse_args(argv) do
+  defp parse_args(argv) do
     {opts, _args, invalid} = OptionParser.parse(argv, strict: @switches, aliases: @aliases)
 
     cond do
@@ -50,6 +52,9 @@ defmodule Mix.Tasks.Commit do
       Keyword.has_key?(opts, :help) == true ->
         {:ok, :help}
 
+      !Keyword.has_key?(opts, :type) ->
+        {:error, "Type of commit flag (-t or --type) required. "}
+
       Keyword.has_key?(opts, :type) && !valid_commit_types?(opts) ->
         {:error,
          "Unknown commit type. Allowed types are: [fix, feat, build, chore, ci, docs, style, refactor, perf, test]"}
@@ -58,23 +63,29 @@ defmodule Mix.Tasks.Commit do
         {:ok, opts}
 
       true ->
-        {:ok, opts}
+        {:error, "Unknown error occured"}
     end
+  end
+
+  defp print_error(error) do
+    error = IO.ANSI.red() <> "USAGE ERROR: " <> error <> IO.ANSI.reset()
+    IO.puts(error)
   end
 
   defp build_repl_args(opts) do
     config = %{
       type: Keyword.get(opts, :type),
       body: Keyword.get(opts, :body),
-      footer: Keyword.get(opts, :footer)
+      footer: Keyword.get(opts, :footer),
+      breaking: Keyword.get(opts, :breaking)
     }
 
     user_config =
       if File.exists?(Path.join(File.cwd!(), ".commit.exs")) do
         {user_config, _} = Code.eval_file(".commit.exs")
 
-          Enum.map(user_config, fn {k, v} -> Map.put(%{}, k, v) end)
-          |> Enum.reduce(fn elem, acc -> Map.merge(elem, acc) end)
+        Enum.map(user_config, fn {k, v} -> Map.put(%{}, k, v) end)
+        |> Enum.reduce(fn elem, acc -> Map.merge(elem, acc) end)
       else
         %{}
       end
@@ -101,7 +112,7 @@ defmodule Mix.Tasks.Commit do
 
     OPTIONS
       -h | --help : Opens this message
-      -t | --type : Accepts a string that defines the type of commit message. Allowed options are:
+      -t | --type : (required) Accepts a string that defines the type of commit message. Allowed options are:
       \n\t#{inspect(Enum.map(@types, &Atom.to_string(&1)))}\n
       -f | --footer : A boolean indicating whether the commit has a footer. Can also be specified in `.commit.exs`
       -n | --no-body : A boolean indicating whether to include a body to the commit message. Default is false meaning that the commit will require a body. Can also be specified in `.commit.exs`
@@ -136,10 +147,12 @@ defmodule Mix.Tasks.Commit do
 
   defp format_commit(state) do
     """
-    #{state.type}(#{state.scope}): #{state.description}
+    #{state.type}#{if state.scope, do: "(#{state.scope})", else: ""}#{if state.breaking, do: "!", else: ""}: #{state.description}
 
     #{state.body}
+
     #{state.footer}
+    #{if state.breaking_change_in_footer, do: "BREAKING CHANGE!", else: ""}
     """
   end
 

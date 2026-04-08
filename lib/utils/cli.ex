@@ -1,7 +1,9 @@
 defmodule Utils.Cli do
+  @moduledoc """
+  A collection of functions that control how the mix task REPL works.
+  """
   def run_repl(opts) do
     state = build_initial_state(opts)
-
     # Check if scope is required and enter it or continue
     state =
       case Map.get(state, :scoped, false) do
@@ -135,9 +137,11 @@ defmodule Utils.Cli do
       body: nil,
       description: nil,
       footer: nil,
-      required_footer: Enum.member?(Map.get(opts, :required, []), :footer),
-      required_body: Enum.member?(Map.get(opts, :required, []), :body),
-      scoped: Enum.member?(Map.get(opts, :required, []), :scope)
+      required_footer: Map.get(opts, :required, []) |> Enum.member?(:footer),
+      required_body: Map.get(opts, :required, []) |> Enum.member?(:body),
+      scoped: Map.get(opts, :required, []) |> Enum.member?(:scope),
+      breaking: Map.get(opts, :breaking, false),
+      breaking_change_in_footer: Map.get(opts, :breaking_change_in_footer, false)
     }
   end
 

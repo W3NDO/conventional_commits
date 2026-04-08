@@ -1,13 +1,20 @@
 # Conventional Commits
 
-![Showcase GIF](./showcase.gif)
+This is a mix task that will open a REPL allowing developers to write commit messages following [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
 
-A mix task that allows for conventional commits of the codebase. 
+# Setup
+- Add `:conventional_commits` to the list of dependencies in `mix.exs`
+```
+def deps do
+    [
+        {:conventional_commits, "~> 0.1.0"}
+    ]
+end
+```
 
-You can read more about conventional commits [here](https://www.conventionalcommits.org/en/v1.0.0/)
-
-A conventional commit message will be structred as
-
+# Usage
+## Conventional Commit
+A conventional commit will have the following structure
 ```
 <type>[optional scope] : <description>
 
@@ -16,53 +23,55 @@ A conventional commit message will be structred as
 [optional footer(s)]
 ```
 
-The purpose of a converntional commit is to communicate intent of your changes to the consumers of your library. Further, by using conventional commits, you make it easier for automated tools to be built within the codebase. 
+For example: 
+```
+feat(logging): Updating logging module
 
-From [Conventionalcommits.org](https://www.conventionalcommits.org/en/v1.0.0/):
+- Updated `parse_log/3` to stream logs. This allows for more consistent load on the backend.
 
-> The commit contains the following structural elements, to communicate intent to the consumers of your library:
+Author: W3NDO
+Refs: #123
+```
 
-    1. fix: a commit of the type fix patches a bug in your codebase (this correlates with PATCH in Semantic Versioning).
-    
-    2. feat: a commit of the type feat introduces a new feature to the codebase (this correlates with MINOR in Semantic Versioning).
-    
-    3. BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
-    
-    4. types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
-    
-    5.footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to git trailer format.
-
-Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic Versioning (unless they include a BREAKING CHANGE). A scope may be provided to a commit’s type, to provide additional contextual information and is contained within parenthesis, e.g., feat(parser): add ability to parse arrays.
-
-## Utility of this tool
-`mix commit [OPTIONS]`
-
-OPTIONS
-### `-h` or `--help`
-Opens the help message
-
-### `-t` or `--type` 
-Accepts a string that defines the type of commit message. Allowed options are:
-`fix`, `feat`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf` and `test`
-
-### `-f` or `--footer`
-A boolean indicating whether the commit has a footer. Can also be specified in the required field in your `.commit.exs` file
-
-## USER DEFINED OPTIONS
-
-### The `.commit.exs` File
-If your organisation enforces some required fields in a commit message, you can specify them here. 
+## The `.commit.exs` file
+This is a file that will specify parts of a commit that may be required by the user's code base. For example, if your organisation needs that all commits contain a `body`, then it is included in the `.commit.exs` file under `required: []`
 
 ```
-# Used by "mix commit"
 [
-  required: [:scope, :body, :footer], # specifies the parts of a commit that must be included. Valid options here are :scope, :body and :footer
-  footer_fields: [:author, :reviewed_by, :refs] # specifies the required footer fields.
+  required: [],
+  footer_fields: [:author, :reviewed_by, :refs],
+  breaking_change_in_footer: false
 ]
 ```
 
-This will ensure to ask the user to enter these fields when writing the commit.
+### `required` field keys
+`body`  : Used if the commit requires a body
+`footer`: Used if the commit requires a footer
+`scope` : Used if the commit requires a scope
+
+If the `.commit.exs` file does not exist, you can specify required parts of the commit using these flags:
+`-f` or `--footer` : Footer required
+`-b` or `--body` : Body required
+`-s` or `--scope`: Scope required. 
+
+### `footer_fields`
+These will be used to specify fields that should be included in the footer. It is ignored if `:footer` is not in `required`. 
+
+### `breaking_change_in_footer`
+This is a boolean that specifies if in the footer ofa commit with a breaking change the tag `BREAKING CHANGE` is included. By default it is false, but all breaking change commits will include a `!` before the description
+
+## Task Options
+- `--type` (or `-t`) - `required` Specifies the type of commit. Accepted options are `fix`, `feat`, `build`, `chore`, `ci`, `docs`, `style`, `refactor`, `perf` and `test`
+- `--footer` (or `-f`) - Used when the commit must have a footer
+- `--scope` (or `-s`) - Used when the commit must have a scope
+- `--body` (or `-b`) - Used when the commit must have a body
+- `--breaking` (or `-B`) - Used when the commit will create a breaking change to the code base. This will append a `!` after type and scope eg: `feat(scope)!: Description`. Optionally, you can specify in your `.commit.exs` if you want the words: `BREAKING CHANGE` included in your footer.
+
 
 ## What this mix task doesn't do
 1. Push your changes upstream.
-2. Add changes to staging. (WIP)
+2. Add your changes to staging. (WIP)
+
+## Contributing
+Visit the [issues tracker](https://github.com/W3NDO/conventional_commits/issues) to see which issues are outstanding. You are welcome to file new issues as well!
+
