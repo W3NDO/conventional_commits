@@ -152,7 +152,6 @@ defmodule Mix.Tasks.Commit do
     #{state.body}
 
     #{state.footer}
-    #{if state.breaking_change_in_footer, do: "BREAKING CHANGE!", else: ""}
     """
   end
 

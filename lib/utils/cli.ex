@@ -94,7 +94,12 @@ defmodule Utils.Cli do
           """
           |> multiline_input("FOOTER")
 
-        %{state | footer: footer}
+        %{
+          state
+          | footer:
+              "#{if state.breaking_change_in_footer, do: "BREAKING CHANGE!\n", else: ""}" <>
+                footer
+        }
     end
   end
 

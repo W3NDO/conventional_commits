@@ -93,4 +93,16 @@ defmodule Utils.CliTest do
       end
     )
   end
+
+  test "enter_footer/1 adds BREAKING CHANGE if the state is true", %{state: state} do
+    multiline_footer = "BREAKING CHANGE!\nAuthor: W3NDO\nREF: #123\n"
+    %{state | breaking_change_in_footer: true}
+
+    capture_io(
+      multiline_footer,
+      fn ->
+        assert Cli.enter_footer(state) |> Map.get(:footer) == multiline_footer |> String.trim()
+      end
+    )
+  end
 end
