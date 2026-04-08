@@ -1,7 +1,5 @@
 defmodule Utils.Cli do
-  @moduledoc """
-  A collection of functions that control how the mix task REPL works.
-  """
+  @moduledoc false
   def run_repl(opts) do
     state = build_initial_state(opts)
     # Check if scope is required and enter it or continue

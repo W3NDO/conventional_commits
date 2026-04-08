@@ -1,7 +1,5 @@
 defmodule Utils.State do
-  @moduledoc """
-  Specifies the fields needed for state of a commit
-  """
+  @moduledoc false
   defstruct type: nil,
             scope: nil,
             description: nil,

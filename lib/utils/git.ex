@@ -1,7 +1,5 @@
 defmodule Utils.Git do
-  @moduledoc """
-  Utilities for interacting with git locally.
-  """
+  @moduledoc false
   def commit(msg) do
     tmp = Path.join(System.tmp_dir!(), "commit_msg.txt")
     File.write!(tmp, msg)
